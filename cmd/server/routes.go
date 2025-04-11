@@ -72,7 +72,7 @@ func userProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handler.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+	handler.RespondWithJSON(w, http.StatusOK, map[string]any{
 		"message": "Protected route",
 
 		"user_id": claims.UserID,
@@ -89,7 +89,7 @@ func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	handler.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+	handler.RespondWithJSON(w, http.StatusOK, map[string]any{
 		"message":  "Admin route",
 		"admin_id": claims.UserID,
 		"email":    claims.Email,

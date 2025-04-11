@@ -1,8 +1,15 @@
-.PHONY: run migrate test lint
 
-# Run the application
+# Load .env file automatically
+ifneq (,$(wildcard .env))
+  include .env
+  export
+endif
+
+.PHONY: run migrate migrate-down migrate-reset test lint docker-build docker-up docker-down dev
+
+# Run the application locally
 run:
-	@go run ./cmd/server/main.go
+	@go run ./cmd/server/.
 
 # Run database migrations
 migrate:
@@ -14,7 +21,7 @@ migrate-down:
 	@echo "Rolling back the most recent migration..."
 	@goose -dir ./migrations postgres "$(DB_URL)" down
 
-# Reset the database by rolling back all migrations and reapplying them
+# Reset the database
 migrate-reset:
 	@echo "Resetting database..."
 	@goose -dir ./migrations postgres "$(DB_URL)" reset
@@ -34,3 +41,23 @@ lint:
 		echo "golangci-lint is not installed. Please install it first."; \
 		exit 1; \
 	fi
+
+# Build Docker image
+docker-build:
+	@echo "Building Docker image..."
+	@docker compose build
+
+# Start all containers
+docker-up:
+	@echo "Starting containers..."
+	@docker compose up -d
+
+# Stop all containers
+docker-down:
+	@echo "Stopping containers..."
+	@docker compose down
+
+# Dev setup: start Docker and run migrations
+dev: docker-up migrate
+	@echo "Dev environment is up!"
+

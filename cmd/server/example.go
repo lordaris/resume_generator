@@ -145,7 +145,7 @@ func exampleSetupRouter() {
 			UserID:    "user123",
 			Role:      "user",
 			ExpiresAt: time.Now().Add(24 * time.Hour),
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"username": username,
 			},
 		}
