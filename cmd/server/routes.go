@@ -18,6 +18,7 @@ func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfi
 
 	// Create repositories
 	userRepo := repository.NewPostgresUserRepository(db)
+	resumeRepo := repository.NewPostgresResumeRepository(db)
 
 	// Create JWT handler
 	jwtHandler := auth.NewJWT(jwtConfig)
@@ -36,6 +37,9 @@ func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfi
 
 	// Create handlers
 	authHandler := handler.NewAuthHandler(authService, redisClient)
+	userHandler := handler.NewUserHandler(userRepo, resumeRepo)
+	resumeHandler := handler.NewResumeHandler(resumeRepo)
+	adminHandler := handler.NewAdminHandler(userRepo)
 
 	// Public routes
 	mux.HandleFunc("POST /api/v1/register", authHandler.RegisterHandler)
@@ -45,38 +49,17 @@ func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfi
 	mux.HandleFunc("POST /api/v1/request-password-reset", authHandler.RequestPasswordResetHandler)
 	mux.HandleFunc("POST /api/v1/reset-password", authHandler.ResetPasswordHandler)
 
-	// Protected routes - need authentication
-	apiHandler := sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// This handler delegates to specific routes based on the request path
-		// We'll use Go 1.22's new handler pattern matching
-		switch r.URL.Path {
-		case "/api/v1/user/profile":
-			// Example protected route
-			userProfileHandler(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})))
+	// User profile route
+	mux.Handle("GET /api/v1/user/profile", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(userHandler.GetProfileHandler))))
 
-	mux.Handle("GET /api/v1/user/profile", apiHandler)
+	// Admin route
+	mux.Handle("GET /api/v1/admin/users", sessionLogger.LogActivity(authMiddleware.AuthRequired(authMiddleware.RequireRole("admin")(http.HandlerFunc(adminHandler.GetUsersHandler)))))
 
-	// Admin routes - need authentication and admin role
-	adminHandler := sessionLogger.LogActivity(authMiddleware.AuthRequired(
-		authMiddleware.RequireRole("admin")(
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Admin handlers
-				switch r.URL.Path {
-				case "/api/v1/admin/users":
-					// Example admin route
-					adminUsersHandler(w, r)
-				default:
-					http.NotFound(w, r)
-				}
-			}),
-		),
-	))
-
-	mux.Handle("GET /api/v1/admin/users", adminHandler)
+	// Resume routes
+	mux.Handle("GET /api/v1/resumes", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.GetResumeListHandler))))
+	mux.Handle("GET /api/v1/resumes/{id}", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.GetResumeHandler))))
+	mux.Handle("POST /api/v1/resumes", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.CreateResumeHandler))))
+	mux.Handle("DELETE /api/v1/resumes/{id}", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.DeleteResumeHandler))))
 
 	return mux
 }
@@ -85,12 +68,13 @@ func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfi
 func userProfileHandler(w http.ResponseWriter, r *http.Request) {
 	claims, err := handler.GetClaimsFromContext(r.Context())
 	if err != nil {
-		handler.respondWithError(w, http.StatusUnauthorized, "Unauthorized", "UNAUTHORIZED")
+		handler.RespondWithError(w, http.StatusUnauthorized, "Unauthorized", "UNAUTHORIZED")
 		return
 	}
 
-	handler.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+	handler.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Protected route",
+
 		"user_id": claims.UserID,
 		"email":   claims.Email,
 		"role":    claims.Role,
@@ -101,11 +85,11 @@ func userProfileHandler(w http.ResponseWriter, r *http.Request) {
 func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
 	claims, err := handler.GetClaimsFromContext(r.Context())
 	if err != nil {
-		handler.respondWithError(w, http.StatusUnauthorized, "Unauthorized", "UNAUTHORIZED")
+		handler.RespondWithError(w, http.StatusUnauthorized, "Unauthorized", "UNAUTHORIZED")
 		return
 	}
 
-	handler.respondWithJSON(w, http.StatusOK, map[string]interface{}{
+	handler.RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"message":  "Admin route",
 		"admin_id": claims.UserID,
 		"email":    claims.Email,

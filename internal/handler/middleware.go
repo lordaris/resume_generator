@@ -41,7 +41,7 @@ func (m *AuthMiddleware) AuthRequired(next http.Handler) http.Handler {
 		// Extract token from Authorization header
 		token, err := extractTokenFromHeader(r)
 		if err != nil {
-			respondWithError(w, http.StatusUnauthorized, "Unauthorized", "INVALID_TOKEN")
+			RespondWithError(w, http.StatusUnauthorized, "Unauthorized", "INVALID_TOKEN")
 			return
 		}
 
@@ -49,10 +49,10 @@ func (m *AuthMiddleware) AuthRequired(next http.Handler) http.Handler {
 		claims, err := m.authService.ValidateAccessToken(token)
 		if err != nil {
 			if errors.Is(err, service.ErrExpiredToken) {
-				respondWithError(w, http.StatusUnauthorized, "Token expired", "TOKEN_EXPIRED")
+				RespondWithError(w, http.StatusUnauthorized, "Token expired", "TOKEN_EXPIRED")
 				return
 			}
-			respondWithError(w, http.StatusUnauthorized, "Invalid token", "INVALID_TOKEN")
+			RespondWithError(w, http.StatusUnauthorized, "Invalid token", "INVALID_TOKEN")
 			return
 		}
 
@@ -71,13 +71,13 @@ func (m *AuthMiddleware) RequireRole(role string) func(http.Handler) http.Handle
 			// Get claims from context
 			claims, ok := r.Context().Value(claimsContextKey).(*auth.JWTClaims)
 			if !ok {
-				respondWithError(w, http.StatusUnauthorized, "Unauthorized", "UNAUTHORIZED")
+				RespondWithError(w, http.StatusUnauthorized, "Unauthorized", "UNAUTHORIZED")
 				return
 			}
 
 			// Check role
 			if claims.Role != role {
-				respondWithError(w, http.StatusForbidden, "Forbidden", "FORBIDDEN")
+				RespondWithError(w, http.StatusForbidden, "Forbidden", "FORBIDDEN")
 				return
 			}
 

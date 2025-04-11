@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -75,14 +76,14 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request body
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
+		RespondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(req); err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		respondWithValidationError(w, validationErrors)
+		RespondWithValidationError(w, validationErrors)
 		return
 	}
 
@@ -95,16 +96,16 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := h.authService.Register(req.Email, req.Password, req.Role)
 	if err != nil {
 		if errors.Is(err, service.ErrUserAlreadyExists) {
-			respondWithError(w, http.StatusConflict, "User with this email already exists", "USER_EXISTS")
+			RespondWithError(w, http.StatusConflict, "User with this email already exists", "USER_EXISTS")
 			return
 		}
 		log.Error().Err(err).Msg("Failed to register user")
-		respondWithError(w, http.StatusInternalServerError, "Failed to register user", "REGISTRATION_FAILED")
+		RespondWithError(w, http.StatusInternalServerError, "Failed to register user", "REGISTRATION_FAILED")
 		return
 	}
 
 	// Return success response
-	respondWithJSON(w, http.StatusCreated, map[string]interface{}{
+	RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
 		"message": "User registered successfully",
 		"user_id": user.ID,
 	})
@@ -120,14 +121,14 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request body
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
+		RespondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(req); err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		respondWithValidationError(w, validationErrors)
+		RespondWithValidationError(w, validationErrors)
 		return
 	}
 
@@ -140,16 +141,16 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			// Return same error for invalid email or password to prevent user enumeration
-			respondWithError(w, http.StatusUnauthorized, "Invalid email or password", "INVALID_CREDENTIALS")
+			RespondWithError(w, http.StatusUnauthorized, "Invalid email or password", "INVALID_CREDENTIALS")
 			return
 		}
 		log.Error().Err(err).Msg("Failed to login user")
-		respondWithError(w, http.StatusInternalServerError, "Failed to login user", "LOGIN_FAILED")
+		RespondWithError(w, http.StatusInternalServerError, "Failed to login user", "LOGIN_FAILED")
 		return
 	}
 
 	// Return tokens
-	respondWithJSON(w, http.StatusOK, tokens)
+	RespondWithJSON(w, http.StatusOK, tokens)
 }
 
 // RefreshTokenHandler handles token refresh
@@ -162,14 +163,14 @@ func (h *AuthHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request
 	// Parse request body
 	var req RefreshTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
+		RespondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(req); err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		respondWithValidationError(w, validationErrors)
+		RespondWithValidationError(w, validationErrors)
 		return
 	}
 
@@ -192,12 +193,12 @@ func (h *AuthHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request
 			message = "Invalid session"
 		}
 
-		respondWithError(w, status, message, code)
+		RespondWithError(w, status, message, code)
 		return
 	}
 
 	// Return tokens
-	respondWithJSON(w, http.StatusOK, tokens)
+	RespondWithJSON(w, http.StatusOK, tokens)
 }
 
 // LogoutHandler handles user logout
@@ -210,26 +211,26 @@ func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse request body
 	var req RefreshTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
+		RespondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(req); err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		respondWithValidationError(w, validationErrors)
+		RespondWithValidationError(w, validationErrors)
 		return
 	}
 
 	// Logout user
 	if err := h.authService.Logout(req.RefreshToken); err != nil {
 		log.Error().Err(err).Msg("Failed to logout user")
-		respondWithError(w, http.StatusInternalServerError, "Failed to logout user", "LOGOUT_FAILED")
+		RespondWithError(w, http.StatusInternalServerError, "Failed to logout user", "LOGOUT_FAILED")
 		return
 	}
 
 	// Return success response
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "User logged out successfully",
 	})
 }
@@ -244,14 +245,14 @@ func (h *AuthHandler) RequestPasswordResetHandler(w http.ResponseWriter, r *http
 	// Parse request body
 	var req PasswordResetRequestRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
+		RespondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(req); err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		respondWithValidationError(w, validationErrors)
+		RespondWithValidationError(w, validationErrors)
 		return
 	}
 
@@ -260,19 +261,19 @@ func (h *AuthHandler) RequestPasswordResetHandler(w http.ResponseWriter, r *http
 	if err != nil {
 		if errors.Is(err, service.ErrUserNotFound) {
 			// Always return success even if user doesn't exist to prevent user enumeration
-			respondWithJSON(w, http.StatusOK, map[string]interface{}{
+			RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 				"message": "Password reset instructions sent if email exists",
 			})
 			return
 		}
 		log.Error().Err(err).Msg("Failed to request password reset")
-		respondWithError(w, http.StatusInternalServerError, "Failed to request password reset", "PASSWORD_RESET_FAILED")
+		RespondWithError(w, http.StatusInternalServerError, "Failed to request password reset", "PASSWORD_RESET_FAILED")
 		return
 	}
 
 	// In a real application, you would send an email with the reset token
 	// For this example, we'll return the token directly
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Password reset instructions sent",
 		"token":   resetToken, // In production, don't return this directly
 	})
@@ -288,14 +289,14 @@ func (h *AuthHandler) ResetPasswordHandler(w http.ResponseWriter, r *http.Reques
 	// Parse request body
 	var req PasswordResetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
+		RespondWithError(w, http.StatusBadRequest, "Invalid request body", "INVALID_REQUEST")
 		return
 	}
 
 	// Validate request
 	if err := h.validator.Struct(req); err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		respondWithValidationError(w, validationErrors)
+		RespondWithValidationError(w, validationErrors)
 		return
 	}
 
@@ -316,12 +317,12 @@ func (h *AuthHandler) ResetPasswordHandler(w http.ResponseWriter, r *http.Reques
 			message = "Reset token already used"
 		}
 
-		respondWithError(w, status, message, code)
+		RespondWithError(w, status, message, code)
 		return
 	}
 
 	// Return success response
-	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Password reset successfully",
 	})
 }
@@ -333,15 +334,19 @@ func (h *AuthHandler) applyRateLimit(w http.ResponseWriter, r *http.Request) boo
 	count, err := h.rateLimiter.CheckRateLimit(r.Context(), r)
 	if err != nil {
 		if errors.Is(err, security.ErrRateLimitExceeded) {
-			respondWithError(w, http.StatusTooManyRequests, "Rate limit exceeded", "RATE_LIMIT_EXCEEDED")
+			RespondWithError(w, http.StatusTooManyRequests, "Rate limit exceeded", "RATE_LIMIT_EXCEEDED")
 			return false
 		}
 		log.Error().Err(err).Msg("Rate limiting error")
 	}
 
-	// Add rate limit headers
+	// Add rate limit headers with correct calculation
 	w.Header().Set("X-RateLimit-Limit", "100")
-	w.Header().Set("X-RateLimit-Remaining", "100-count")
+	remaining := 100 - count
+	if remaining < 0 {
+		remaining = 0
+	}
+	w.Header().Set("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
 	w.Header().Set("X-RateLimit-Reset", "60")
 
 	return true

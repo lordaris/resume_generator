@@ -17,8 +17,8 @@ type ErrorResponse struct {
 	Details map[string]interface{} `json:"details,omitempty"`
 }
 
-// respondWithJSON writes a JSON response
-func respondWithJSON(w http.ResponseWriter, status int, data interface{}) {
+// RespondWithJSON writes a JSON response
+func RespondWithJSON(w http.ResponseWriter, status int, data interface{}) {
 	// Set headers
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -37,26 +37,32 @@ func respondWithJSON(w http.ResponseWriter, status int, data interface{}) {
 	}
 }
 
-// respondWithError writes a JSON error response
-func respondWithError(w http.ResponseWriter, status int, message, code string) {
+// RespondWithError writes a JSON error response
+func RespondWithError(w http.ResponseWriter, status int, message, code string) {
 	response := ErrorResponse{
 		Status: status,
 		Error:  message,
 		Code:   code,
 	}
-	respondWithJSON(w, status, response)
+	RespondWithJSON(w, status, response)
 }
 
-// respondWithValidationError writes a validation error response
-func respondWithValidationError(w http.ResponseWriter, validationErrors validator.ValidationErrors) {
+// RespondWithValidationError writes a validation error response
+func RespondWithValidationError(w http.ResponseWriter, validationErrors interface{}) {
 	// Create error details
 	details := make(map[string]interface{})
 	fieldErrors := make(map[string]string)
 
-	for _, err := range validationErrors {
-		// Convert field name to JSON field name (usually lowercase)
-		field := strings.ToLower(err.Field())
-		fieldErrors[field] = getValidationErrorMessage(err)
+	// Check if it's the expected type
+	if errs, ok := validationErrors.(validator.ValidationErrors); ok {
+		for _, err := range errs {
+			// Convert field name to JSON field name (usually lowercase)
+			field := strings.ToLower(err.Field())
+			fieldErrors[field] = GetValidationErrorMessage(err)
+		}
+	} else {
+		// Handle unexpected validation error type
+		fieldErrors["general"] = "Validation failed"
 	}
 
 	details["fields"] = fieldErrors
@@ -69,11 +75,11 @@ func respondWithValidationError(w http.ResponseWriter, validationErrors validato
 		Details: details,
 	}
 
-	respondWithJSON(w, http.StatusBadRequest, response)
+	RespondWithJSON(w, http.StatusBadRequest, response)
 }
 
-// getValidationErrorMessage returns a human-readable validation error message
-func getValidationErrorMessage(err validator.FieldError) string {
+// GetValidationErrorMessage returns a human-readable validation error message
+func GetValidationErrorMessage(err validator.FieldError) string {
 	switch err.Tag() {
 	case "required":
 		return "This field is required"
@@ -102,5 +108,5 @@ func respondWithSuccess(w http.ResponseWriter, message string, data interface{})
 		Message: message,
 		Data:    data,
 	}
-	respondWithJSON(w, http.StatusOK, response)
+	RespondWithJSON(w, http.StatusOK, response)
 }
