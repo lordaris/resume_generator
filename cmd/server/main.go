@@ -8,9 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/lordaris/resume_generator/pkg/auth"
 	"github.com/lordaris/resume_generator/pkg/config"
 	"github.com/lordaris/resume_generator/pkg/database"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -33,8 +34,42 @@ func main() {
 	}
 	defer db.Close()
 
-	// Initialize server
-	server := setupServer(db, cfg)
+	// Connect to Redis
+	redisOptions, err := redis.ParseURL(cfg.RedisUrl)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to parse Redis URL")
+	}
+	redisClient := redis.NewClient(redisOptions)
+	defer redisClient.Close()
+
+	// Ping Redis to check connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to Redis")
+	}
+
+	// JWT configuration
+	jwtConfig := auth.JWTConfig{
+		Secret:             cfg.JWTSecret,
+		AccessTokenExpiry:  15 * time.Minute,
+		RefreshTokenExpiry: 7 * 24 * time.Hour, // 7 days
+		ResetTokenExpiry:   1 * time.Hour,
+		Issuer:             "resume_generator",
+		Audience:           "resume_generator_users",
+	}
+
+	// Setup router
+	router := setupRoutes(db, redisClient, jwtConfig)
+
+	// Create server
+	server := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
 
 	// Start server in a goroutine
 	go func() {
@@ -51,7 +86,7 @@ func main() {
 	log.Info().Msg("Shutting down server...")
 
 	// Create shutdown context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
@@ -59,24 +94,4 @@ func main() {
 	}
 
 	log.Info().Msg("Server exited properly")
-}
-
-func setupServer(db *sqlx.DB, cfg *config.Config) *http.Server {
-	// Create router
-	mux := http.NewServeMux()
-
-	// Basic health check route
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-
-	// Create the HTTP server
-	return &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      mux,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
 }

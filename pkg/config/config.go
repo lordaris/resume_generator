@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Port      string
 	DBUrl     string
+	RedisUrl  string
 	JWTSecret string
 	CSRFKey   string
 }
@@ -27,6 +28,7 @@ func Load() (*Config, error) {
 	config := &Config{
 		Port:      os.Getenv("PORT"),
 		DBUrl:     os.Getenv("DB_URL"),
+		RedisUrl:  os.Getenv("REDIS_URL"),
 		JWTSecret: os.Getenv("JWT_SECRET"),
 		CSRFKey:   os.Getenv("CSRF_KEY"),
 	}
@@ -35,11 +37,16 @@ func Load() (*Config, error) {
 	var missingVars []string
 
 	if config.Port == "" {
-		missingVars = append(missingVars, "PORT")
+		// Default port if not specified
+		config.Port = "8080"
 	}
 
 	if config.DBUrl == "" {
 		missingVars = append(missingVars, "DB_URL")
+	}
+
+	if config.RedisUrl == "" {
+		missingVars = append(missingVars, "REDIS_URL")
 	}
 
 	if config.JWTSecret == "" {
