@@ -2,7 +2,6 @@ package security
 
 import (
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -16,9 +15,11 @@ type CORSConfig struct {
 
 func DefaultCORSConfig() CORSConfig {
 	return CORSConfig{
-		AllowedOrigins:   []string{os.Getenv("FRONTEND_URL")}, // Get from environment
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token"},
+		// Allow all origins temporarily for debugging
+		// TODO: Replace "*" with "FRONTEND_URL" for production
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token", "X-Requested-With"},
 		AllowCredentials: true,
 		MaxAge:           86400,
 	}

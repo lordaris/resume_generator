@@ -9,6 +9,7 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'user',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Add index on email for faster lookups during login

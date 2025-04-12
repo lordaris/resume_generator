@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lordaris/resume_generator/internal/handler"
@@ -43,6 +44,12 @@ func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfi
 	adminHandler := handler.NewAdminHandler(userRepo)
 
 	// Public routes
+	mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
+		handler.RespondWithJSON(w, http.StatusOK, map[string]any{
+			"status": "healthy",
+			"time":   time.Now().Format(time.RFC3339),
+		})
+	})
 	mux.HandleFunc("POST /api/v1/register", authHandler.RegisterHandler)
 	mux.HandleFunc("POST /api/v1/login", authHandler.LoginHandler)
 	mux.HandleFunc("POST /api/v1/refresh-token", authHandler.RefreshTokenHandler)

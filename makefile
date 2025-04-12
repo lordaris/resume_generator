@@ -83,11 +83,9 @@ docker-build:
 	@echo "Building Docker image..."
 	@docker compose build backend frontend
 
-# Start all containers. Add --wait flag to ensure dependencies are ready
-# Again, leave me alone, I'm learning docker. 
 docker-up:
 	@echo "Starting containers..."
-	@docker compose up -d --wait postgres redis backend frontend
+	@docker compose up -d 
 
 # --- Full Development Setup ---
 dev-full: docker-up migrate frontend-dev
