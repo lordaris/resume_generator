@@ -4,138 +4,132 @@ ifneq (,$(wildcard .env))
   export
 endif
 
-.PHONY: run migrate migrate-down migrate-reset test lint docker-build docker-up docker-down dev check-containers check-db check-app verify clean frontend-install frontend-dev frontend-build frontend-start
+.PHONY: start stop restart build dev backend-container frontend-container \
+	db-only migrate migrate-down migrate-reset migrate-status run-backend-local \
+	run-frontend-local frontend-install frontend-build test lint check-containers \
+	check-db check-app verify clean help
 
-# --- Backend commands --- 
-# Run the application locally
-run:
-	@cd backend && go run ./cmd/server/.
+.DEFAULT_GOAL := help
 
-# Run database migrations (via Docker). Added --rm flag to automatically remove 
-# migration containers after execution. Leave me alone, I'm learning docker. 
-migrate:
+# --- Primary commands ---
+start: ## Start all containers and show URLs
+	@echo "Starting all containers..."
+	@docker compose up -d
+	@echo "Services available at:"
+	@echo " - Backend: http://localhost:${BACKEND_PORT}"
+	@echo " - Frontend: http://localhost:${FRONTEND_PORT}"
+
+stop: ## Stop all running containers
+	@echo "Stopping all containers..."
+	@docker compose down
+
+restart: ## Restart all services (stop + start)
+	@echo "Restarting services..."
+	@docker compose restart
+
+build: ## Rebuild all Docker images after changes
+	@echo "Building all images..."
+	@docker compose build
+
+# --- Development workflows ---
+dev: ## Full setup: start services, run migrations, and verify everything
+dev: start migrate verify
+	@echo "Starting development environment..."
+	@echo "Development environment ready!"
+
+backend-container: ## Start only backend + database services
+	@docker compose up -d postgres redis backend
+
+frontend-container: ## Start only frontend service
+	@docker compose up -d frontend
+
+# --- Database operations ---
+db-only: ## Start only database and Redis
+	@echo "Starting database services..."
+	@docker compose up -d postgres redis
+
+migrate: ## Apply database migrations
 	@echo "Running database migrations..."
 	@docker compose run --rm migrations
 
-# Roll back the most recent migration
-migrate-down:
+migrate-down: ## Rollback last migration
 	@echo "Rolling back migration..."
-	@docker compose run --rm migrations sh -c 'goose -dir ./backend/migrations postgres "$$DB_URL" down' # Reset the database
+	@docker compose run --rm migrations sh -c 'goose -dir ./migrations postgres "$$DB_URL" down'
 
-migrate-reset:
+migrate-reset: ## Reset database to clean state (all migrations down then up)
 	@echo "Resetting database..."
-	@docker compose run --rm migrations sh -c 'goose -dir ./backend/migrations postgres "$$DB_URL" reset'
-	@docker compose run --rm migrations sh -c 'goose -dir ./backend/migrations postgres "$$DB_URL" up'
+	@docker compose run --rm migrations sh -c 'goose -dir ./migrations postgres "$$DB_URL" reset'
+	@docker compose run --rm migrations sh -c 'goose -dir ./migrations postgres "$$DB_URL" up'
 
-migrate-status:
+migrate-status: ## Show current migration status
 	@echo "Migration status:"
-	@docker compose run --rm migrations sh -c 'goose -dir ./backend/migrations postgres "$$DB_URL" status'
+	@docker compose run --rm migrations sh -c 'goose -dir ./migrations postgres "$$DB_URL" status'
 
+# --- Local development ---
+run-backend-local: ## Run backend locally (requires running database)
+	@echo "Starting local backend server..."
+	@cd backend && go run ./cmd/server/.
 
-## Test and quality commands 
-
-# Run tests
-test:
-	@echo "Running tests..."
-	@cd backend && go test -v ./...
-
-# Run linter
-lint:
-	@echo "Running linter..."
-	@if command -v golangci-lint &> /dev/null; then \
-		golangci-lint run ./...; \
+run-frontend-local: frontend-install ## Run frontend locally with dev server
+	@echo "Starting local frontend dev server..."
+	@if command -v yarn >/dev/null; then \
+	  cd frontend && yarn dev; \
 	else \
-		echo "golangci-lint is not installed. Please install it first."; \
-		exit 1; \
+	  cd frontend && npm run dev; \
 	fi
 
-
-## --- Frontend commands ---
-frontend-install:
+# --- Frontend operations ---
+frontend-install: ## Install frontend dependencies
 	@echo "Installing frontend dependencies..."
 	@if command -v yarn >/dev/null; then \
-		cd frontend && yarn install; \
+	 cd frontend && yarn install; \
 	else \
-		echo "Yarn not found, using npm instead..."; \
-		cd frontend && npm install; \
+	 echo "Yarn not found, using npm instead..."; \
+	 cd frontend && npm install; \
 	fi
 
-frontend-dev:
-	@echo "Starting frontend development server..."
-	@if command -v yarn >/dev/null; then \
-		cd frontend && yarn dev; \
-	else \
-		cd frontend && npm run dev; \
-	fi
-
-frontend-build:
+frontend-build: ## Build production frontend assets
 	@echo "Building frontend for production..."
 	@cd frontend && yarn build
 
-frontend-start:
-	@echo "Starting production frontend..."
-	@docker compose up -d frontend
+# --- Quality control ---
+test: ## Run backend tests
+	@echo "Running tests..."
+	@cd backend && go test -v ./...
 
-# --- Docker commands --- 
+lint: ## Run code linter
+	@echo "Running linter..."
+	@if command -v golangci-lint &> /dev/null; then \
+	 golangci-lint run ./...; \
+	else \
+	 echo "golangci-lint is not installed. Please install it first."; \
+	 exit 1; \
+	fi
 
-# Build Docker image
-docker-build:
-	@echo "Building Docker image..."
-	@docker compose build backend frontend
-
-docker-up:
-	@echo "Starting containers..."
-	@docker compose up -d 
-
-# --- Full Development Setup ---
-dev-full: docker-up migrate frontend-dev
-	@echo "Full development environment ready!"
-	@echo "Backend: http://localhost:${BACKEND_PORT}"
-	@echo "Frontend: http://localhost:${FRONTEND_PORT}"
-
-# Stop all containers
-docker-down:
-	@echo "Stopping containers..."
-	@docker compose down
-
-## Verification commands 
-
-check-containers:
+# --- System checks ---
+check-containers: ## Show container statuses
 	@echo "Container status:"
 	@docker compose ps
 
-check-db:
+check-db: ## Verify database connection
 	@echo "Testing database connection:"
 	@docker compose exec postgres psql -U postgres -d resume_generator -c "\dt"
 
-check-app:
+check-app: ## Check application health status
 	@echo "Testing application health:"
 	@curl -s http://localhost:${PORT}/api/v1/health | jq
 
+verify: ## Verify system health (containers + DB + app)
 verify: check-containers check-db check-app
 
-## Log inspection
-
-logs:
-	@docker compose logs --follow
-
-logs-postgres:
-	@docker compose logs postgres --follow
-
-logs-app:
-	@docker compose logs app --follow
-
-# Dev setup: start Docker and run migrations
-dev: docker-up migrate verify
-	@echo "Dev environment is up and verified!"
-
-## Deep clean
-clean: docker-down
-	@echo "Removing volumes..."
-	@docker volume prune -f
-	@echo "Clean complete!"
-
-# --- Frontend-Specific Clean ---
-clean-frontend:
-	@echo "Cleaning frontend artifacts..."
+# --- Maintenance ---
+clean: ## Remove all containers, volumes, and build artifacts
+	@echo "Cleaning system..."
+	@docker compose down -v
+	@echo "Removing frontend artifacts..."
 	@cd frontend && rm -rf node_modules dist .cache
+	@echo "Cleanup complete!"
+
+# --- Documentation ---
+help: ## Show this help message
+	@awk 'BEGIN {FS = ":.*?## "}; /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
