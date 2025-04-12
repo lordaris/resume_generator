@@ -8,6 +8,7 @@ import (
 	"github.com/lordaris/resume_generator/internal/repository"
 	"github.com/lordaris/resume_generator/internal/service"
 	"github.com/lordaris/resume_generator/pkg/auth"
+	"github.com/lordaris/resume_generator/pkg/security"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -61,7 +62,12 @@ func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfi
 	mux.Handle("POST /api/v1/resumes", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.CreateResumeHandler))))
 	mux.Handle("DELETE /api/v1/resumes/{id}", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.DeleteResumeHandler))))
 
-	return mux
+	corsMiddleware := security.CORSMiddleware(security.DefaultCORSConfig())
+
+	// Wrap the entire router with CORS middleware
+	handlerWithCORS := corsMiddleware(mux)
+
+	return handlerWithCORS
 }
 
 // Example protected handler
