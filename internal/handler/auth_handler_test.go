@@ -156,14 +156,14 @@ func TestRegisterHandler(t *testing.T) {
 	// Test data
 	testCases := []struct {
 		name           string
-		requestBody    map[string]interface{}
+		requestBody    map[string]any
 		setupMock      func()
 		expectedStatus int
 		expectedBody   string
 	}{
 		{
 			name: "Successful registration",
-			requestBody: map[string]interface{}{
+			requestBody: map[string]any{
 				"email":    "test@example.com",
 				"password": "password123",
 			},
@@ -176,7 +176,7 @@ func TestRegisterHandler(t *testing.T) {
 		},
 		{
 			name: "User already exists",
-			requestBody: map[string]interface{}{
+			requestBody: map[string]any{
 				"email":    "existing@example.com",
 				"password": "password123",
 			},
@@ -192,7 +192,7 @@ func TestRegisterHandler(t *testing.T) {
 		},
 		{
 			name: "Invalid email",
-			requestBody: map[string]interface{}{
+			requestBody: map[string]any{
 				"email":    "invalid-email",
 				"password": "password123",
 			},
@@ -202,7 +202,7 @@ func TestRegisterHandler(t *testing.T) {
 		},
 		{
 			name: "Password too short",
-			requestBody: map[string]interface{}{
+			requestBody: map[string]any{
 				"email":    "test@example.com",
 				"password": "short",
 			},
@@ -255,14 +255,14 @@ func TestLoginHandler(t *testing.T) {
 	// Test data
 	testCases := []struct {
 		name           string
-		requestBody    map[string]interface{}
+		requestBody    map[string]any
 		setupMock      func()
 		expectedStatus int
 		expectedBody   string
 	}{
 		{
 			name: "Successful login",
-			requestBody: map[string]interface{}{
+			requestBody: map[string]any{
 				"email":    "test@example.com",
 				"password": "password123",
 			},
@@ -275,7 +275,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			name: "Invalid email",
-			requestBody: map[string]interface{}{
+			requestBody: map[string]any{
 				"email":    "nonexistent@example.com",
 				"password": "password123",
 			},
@@ -287,7 +287,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			name: "Invalid password",
-			requestBody: map[string]interface{}{
+			requestBody: map[string]any{
 				"email":    "test@example.com",
 				"password": "wrongpassword",
 			},

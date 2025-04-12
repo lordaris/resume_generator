@@ -781,7 +781,7 @@ func (r *PostgresResumeRepository) AddSkill(resumeID uuid.UUID, skill *domain.Sk
 	now := time.Now()
 
 	// Use NULL for zero proficiency
-	var proficiency interface{}
+	var proficiency any
 	if skill.Proficiency != 0 {
 		proficiency = skill.Proficiency
 	} else {
@@ -829,7 +829,7 @@ func (r *PostgresResumeRepository) UpdateSkill(id uuid.UUID, skill *domain.Skill
 	now := time.Now()
 
 	// Use NULL for zero proficiency
-	var proficiency interface{}
+	var proficiency any
 	if skill.Proficiency != 0 {
 		proficiency = skill.Proficiency
 	} else {

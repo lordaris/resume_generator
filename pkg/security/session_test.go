@@ -25,7 +25,7 @@ func TestSessionCreateAndGet(t *testing.T) {
 		UserID:    "user123",
 		Role:      "admin",
 		ExpiresAt: time.Now().Add(24 * time.Hour),
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"username": "testuser",
 			"email":    "test@example.com",
 		},

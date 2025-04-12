@@ -105,7 +105,7 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return success response
-	RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
+	RespondWithJSON(w, http.StatusCreated, map[string]any{
 		"message": "User registered successfully",
 		"user_id": user.ID,
 	})
@@ -230,7 +230,7 @@ func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return success response
-	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+	RespondWithJSON(w, http.StatusOK, map[string]any{
 		"message": "User logged out successfully",
 	})
 }
@@ -261,7 +261,7 @@ func (h *AuthHandler) RequestPasswordResetHandler(w http.ResponseWriter, r *http
 	if err != nil {
 		if errors.Is(err, service.ErrUserNotFound) {
 			// Always return success even if user doesn't exist to prevent user enumeration
-			RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+			RespondWithJSON(w, http.StatusOK, map[string]any{
 				"message": "Password reset instructions sent if email exists",
 			})
 			return
@@ -273,7 +273,7 @@ func (h *AuthHandler) RequestPasswordResetHandler(w http.ResponseWriter, r *http
 
 	// In a real application, you would send an email with the reset token
 	// For this example, we'll return the token directly
-	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+	RespondWithJSON(w, http.StatusOK, map[string]any{
 		"message": "Password reset instructions sent",
 		"token":   resetToken, // In production, don't return this directly
 	})
@@ -322,7 +322,7 @@ func (h *AuthHandler) ResetPasswordHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Return success response
-	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+	RespondWithJSON(w, http.StatusOK, map[string]any{
 		"message": "Password reset successfully",
 	})
 }

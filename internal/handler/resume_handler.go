@@ -147,7 +147,7 @@ func (h *ResumeHandler) DeleteResumeHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+	RespondWithJSON(w, http.StatusOK, map[string]any{
 		"message": "Resume deleted successfully",
 	})
 }

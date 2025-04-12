@@ -51,7 +51,7 @@ type SessionData struct {
 	// ExpiresAt is the expiration time of the session
 	ExpiresAt time.Time `json:"expires_at"`
 	// Custom data map for additional session data
-	Data map[string]interface{} `json:"data,omitempty"`
+	Data map[string]any `json:"data,omitempty"`
 }
 
 // Session provides secure session management with encrypted cookies

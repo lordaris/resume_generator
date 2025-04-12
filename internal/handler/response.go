@@ -14,11 +14,11 @@ type ErrorResponse struct {
 	Status  int                    `json:"-"`
 	Error   string                 `json:"error"`
 	Code    string                 `json:"code"`
-	Details map[string]interface{} `json:"details,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 }
 
 // RespondWithJSON writes a JSON response
-func RespondWithJSON(w http.ResponseWriter, status int, data interface{}) {
+func RespondWithJSON(w http.ResponseWriter, status int, data any) {
 	// Set headers
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -48,9 +48,9 @@ func RespondWithError(w http.ResponseWriter, status int, message, code string) {
 }
 
 // RespondWithValidationError writes a validation error response
-func RespondWithValidationError(w http.ResponseWriter, validationErrors interface{}) {
+func RespondWithValidationError(w http.ResponseWriter, validationErrors any) {
 	// Create error details
-	details := make(map[string]interface{})
+	details := make(map[string]any)
 	fieldErrors := make(map[string]string)
 
 	// Check if it's the expected type
@@ -99,11 +99,11 @@ func GetValidationErrorMessage(err validator.FieldError) string {
 // SuccessResponse represents a standardized success response
 type SuccessResponse struct {
 	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	Data    any `json:"data,omitempty"`
 }
 
 // respondWithSuccess writes a JSON success response
-func respondWithSuccess(w http.ResponseWriter, message string, data interface{}) {
+func respondWithSuccess(w http.ResponseWriter, message string, data any) {
 	response := SuccessResponse{
 		Message: message,
 		Data:    data,

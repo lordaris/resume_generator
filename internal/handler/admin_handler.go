@@ -28,7 +28,7 @@ func (h *AdminHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Here we would typically implement a method to get all users
 	// For this example, we'll just return a success message
-	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
+	RespondWithJSON(w, http.StatusOK, map[string]any{
 		"message":  "Admin route accessed successfully",
 		"admin_id": claims.UserID,
 		"email":    claims.Email,

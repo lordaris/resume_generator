@@ -8,12 +8,12 @@ import (
 // Response represents a standard API response
 type Response struct {
 	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
+	Data    any `json:"data,omitempty"`
 	Error   string      `json:"error,omitempty"`
 }
 
 // JSON sends a JSON response with the given status code
-func JSON(w http.ResponseWriter, status int, data interface{}) {
+func JSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
@@ -23,7 +23,7 @@ func JSON(w http.ResponseWriter, status int, data interface{}) {
 }
 
 // Success sends a successful JSON response
-func Success(w http.ResponseWriter, data interface{}) {
+func Success(w http.ResponseWriter, data any) {
 	resp := Response{
 		Success: true,
 		Data:    data,
