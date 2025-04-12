@@ -8,6 +8,11 @@ services:
       POSTGRES_DB: resume_generator
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -31,6 +36,21 @@ services:
       - postgres
     env_file:
       - .env
+
+  migrations:
+    build: .
+    command: sh -c 'goose -dir ./migrations postgres "$$DB_URL" up'
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # prevent container persistence
+    restart: "no"
+    networks:
+      - default
+    volumes:
+      - ./migrations:/app/migrations
 
 volumes:
   postgres_data:

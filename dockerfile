@@ -6,6 +6,9 @@ WORKDIR /app
 # Install build dependencies
 RUN apk add --no-cache git
 
+# Install Goose for database migrations
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+
 # Copy go.mod and go.sum
 COPY go.mod ./
 
@@ -28,6 +31,8 @@ RUN apk --no-cache add ca-certificates tzdata
 
 # Copy binary from builder stage
 COPY --from=builder /app/resume-generator .
+COPY --from=builder /go/bin/goose /usr/local/bin/goose  
+COPY --from=builder /app/migrations ./migrations
 
 # Create a non-root user to run the application
 RUN adduser -D -g '' appuser

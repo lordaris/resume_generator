@@ -65,18 +65,6 @@ COMMENT ON COLUMN password_resets.expires_at IS 'Expiration time for the passwor
 COMMENT ON COLUMN password_resets.created_at IS 'Time when the password reset request was created';
 COMMENT ON COLUMN password_resets.used_at IS 'Time when the password reset request was used (NULL if not used)';
 
--- Add role column to users table if it doesn't exist
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'role'
-    ) THEN
-        ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user';
-        COMMENT ON COLUMN users.role IS 'User role (e.g., user, admin)';
-    END IF;
-END$$;
-
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
 DROP INDEX IF EXISTS idx_password_resets_expires_at;

@@ -1,4 +1,4 @@
--- migrations/20250411000003_create_resume_sections_table.sql
+-- +goose Up
 -- Replace with separate tables for each section type
 
 -- Create table for personal info
