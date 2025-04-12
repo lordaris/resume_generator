@@ -10,13 +10,14 @@ RUN apk add --no-cache git
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
 # Copy go.mod and go.sum
-COPY go.mod ./
+COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
 # Copy source code
 COPY . .
+
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -o resume-generator ./cmd/server
