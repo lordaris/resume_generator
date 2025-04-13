@@ -11,9 +11,9 @@ import (
 
 // ErrorResponse represents a standardized error response
 type ErrorResponse struct {
-	Status  int                    `json:"-"`
-	Error   string                 `json:"error"`
-	Code    string                 `json:"code"`
+	Status  int            `json:"-"`
+	Error   string         `json:"error"`
+	Code    string         `json:"code"`
 	Details map[string]any `json:"details,omitempty"`
 }
 
@@ -98,15 +98,15 @@ func GetValidationErrorMessage(err validator.FieldError) string {
 
 // SuccessResponse represents a standardized success response
 type SuccessResponse struct {
-	Message string      `json:"message"`
-	Data    any `json:"data,omitempty"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
 }
 
-// respondWithSuccess writes a JSON success response
-func respondWithSuccess(w http.ResponseWriter, message string, data any) {
-	response := SuccessResponse{
-		Message: message,
-		Data:    data,
-	}
-	RespondWithJSON(w, http.StatusOK, response)
-}
+// // respondWithSuccess writes a JSON success response
+// func respondWithSuccess(w http.ResponseWriter, message string, data any) {
+// 	response := SuccessResponse{
+// 		Message: message,
+// 		Data:    data,
+// 	}
+// 	RespondWithJSON(w, http.StatusOK, response)
+// }

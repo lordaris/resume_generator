@@ -76,35 +76,3 @@ func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfi
 
 	return handlerWithCORS
 }
-
-// Example protected handler
-func userProfileHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := handler.GetClaimsFromContext(r.Context())
-	if err != nil {
-		handler.RespondWithError(w, http.StatusUnauthorized, "Unauthorized", "UNAUTHORIZED")
-		return
-	}
-
-	handler.RespondWithJSON(w, http.StatusOK, map[string]any{
-		"message": "Protected route",
-
-		"user_id": claims.UserID,
-		"email":   claims.Email,
-		"role":    claims.Role,
-	})
-}
-
-// Example admin handler
-func adminUsersHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := handler.GetClaimsFromContext(r.Context())
-	if err != nil {
-		handler.RespondWithError(w, http.StatusUnauthorized, "Unauthorized", "UNAUTHORIZED")
-		return
-	}
-
-	handler.RespondWithJSON(w, http.StatusOK, map[string]any{
-		"message":  "Admin route",
-		"admin_id": claims.UserID,
-		"email":    claims.Email,
-	})
-}

@@ -23,7 +23,7 @@ func BenchmarkPersonalInfoValidation(b *testing.B) {
 		JobTitle: "Software Engineer",
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		personalInfo.Validate()
 	}
 }
@@ -40,7 +40,7 @@ func BenchmarkEducationValidation(b *testing.B) {
 		Description: "Graduated with honors",
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		education.Validate()
 	}
 }
@@ -60,7 +60,7 @@ func BenchmarkExperienceValidation(b *testing.B) {
 		},
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		experience.Validate()
 	}
 }
@@ -73,7 +73,7 @@ func BenchmarkSkillValidation(b *testing.B) {
 		Proficiency: 5,
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		skill.Validate()
 	}
 }
@@ -94,7 +94,7 @@ func BenchmarkProjectValidation(b *testing.B) {
 		EndDate:   "2020-02-15",
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		project.Validate()
 	}
 }
@@ -110,7 +110,7 @@ func BenchmarkCertificationValidation(b *testing.B) {
 		URL:          "https://aws.amazon.com/certification/certified-solutions-architect-associate/",
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		certification.Validate()
 	}
 }

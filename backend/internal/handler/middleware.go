@@ -87,11 +87,7 @@ func (m *AuthMiddleware) RequireRole(role string) func(http.Handler) http.Handle
 	}
 }
 
-// SessionLogger middleware logs user activity
-type SessionLogger struct {
-	// In a real application, this would often write to a database
-	// For this example, we'll just log to stdout
-}
+type SessionLogger struct{}
 
 // NewSessionLogger creates a new session logger
 func NewSessionLogger() *SessionLogger {

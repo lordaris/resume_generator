@@ -271,11 +271,9 @@ func (h *AuthHandler) RequestPasswordResetHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	// In a real application, you would send an email with the reset token
-	// For this example, we'll return the token directly
 	RespondWithJSON(w, http.StatusOK, map[string]any{
 		"message": "Password reset instructions sent",
-		"token":   resetToken, // In production, don't return this directly
+		"token":   resetToken,
 	})
 }
 
@@ -342,10 +340,7 @@ func (h *AuthHandler) applyRateLimit(w http.ResponseWriter, r *http.Request) boo
 
 	// Add rate limit headers with correct calculation
 	w.Header().Set("X-RateLimit-Limit", "100")
-	remaining := 100 - count
-	if remaining < 0 {
-		remaining = 0
-	}
+	remaining := max(100-count, 0)
 	w.Header().Set("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
 	w.Header().Set("X-RateLimit-Reset", "60")
 
