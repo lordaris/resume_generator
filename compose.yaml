@@ -22,6 +22,11 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
@@ -31,8 +36,10 @@ services:
     ports:
       - "${BACKEND_PORT}:8080"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
     build: ./frontend

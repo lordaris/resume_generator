@@ -15,6 +15,7 @@ import (
 
 // setupRoutes configures and returns the router with all routes
 func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfig) http.Handler {
+	corsMiddleware := security.CORSMiddleware(security.DefaultCORSConfig())
 	// Create router
 	mux := http.NewServeMux()
 
@@ -68,8 +69,6 @@ func setupRoutes(db *sqlx.DB, redisClient *redis.Client, jwtConfig auth.JWTConfi
 	mux.Handle("GET /api/v1/resumes/{id}", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.GetResumeHandler))))
 	mux.Handle("POST /api/v1/resumes", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.CreateResumeHandler))))
 	mux.Handle("DELETE /api/v1/resumes/{id}", sessionLogger.LogActivity(authMiddleware.AuthRequired(http.HandlerFunc(resumeHandler.DeleteResumeHandler))))
-
-	corsMiddleware := security.CORSMiddleware(security.DefaultCORSConfig())
 
 	// Wrap the entire router with CORS middleware
 	handlerWithCORS := corsMiddleware(mux)

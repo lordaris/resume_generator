@@ -17,7 +17,7 @@ func DefaultCORSConfig() CORSConfig {
 	return CORSConfig{
 		// Allow all origins temporarily for debugging
 		// TODO: Replace "*" with "FRONTEND_URL" for production
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-CSRF-Token", "X-Requested-With"},
 		AllowCredentials: true,
@@ -58,8 +58,10 @@ func CORSMiddleware(config CORSConfig) func(http.Handler) http.Handler {
 				w.Header().Set("Access-Control-Max-Age", strconv.Itoa(config.MaxAge))
 			}
 
-			// Manejar solicitudes de preflight OPTIONS
 			if r.Method == http.MethodOptions {
+				w.Header().Add("Vary", "Origin")
+				w.Header().Add("Vary", "Access-Control-Request-Method")
+				w.Header().Add("Vary", "Access-Control-Request-Headers")
 				w.WriteHeader(http.StatusNoContent)
 				return
 			}
